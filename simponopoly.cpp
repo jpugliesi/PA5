@@ -6,6 +6,10 @@
 #include "Card.h"
 #include "Bank.h"
 #include "Die.h"
+#include "MoneyAction.h"
+#include "MoveAction.h"
+#include "GoToAction.h"
+#include "PropertyAction.h"
 
 void occupyPieces();
 int welcome();
@@ -15,11 +19,13 @@ int getNumPlayers();
 
 void getPlayerInfo();
 
+int yesOrNo();
+
 void printInstructions(); //to implement
 void printAvailablePieces(int *chosenPieces);
 bool pieceIsTaken(int *chosenPieces, int choice);
 
-int playTurn(Game_Board &theBoard, Player &thePlayer, Die d1, Die d2, int turn);
+int playTurn(Game_Board* theBoard, Player* thePlayer, Die d1, Die d2, int turn);
 int gameOver();
 
 const int NUM_PIECES = 10;
@@ -28,6 +34,8 @@ std::string pieces[NUM_PIECES];
 int numPlayers;
 Player *players;
 int turn = 0;
+
+Bank theBank;
 
 int main(){
 
@@ -53,8 +61,7 @@ int main(){
 		while(!gameOver()){
 
 			Player *playerWithTurn = &(players[turn]);
-			turn = playTurn(theBoard, *playerWithTurn, die1, die2, turn);
-			theBoard.printBoard();
+			turn = playTurn(&theBoard, playerWithTurn, die1, die2, turn);
 
 			if(turn == numPlayers-1){
 				turn = 0;
@@ -62,7 +69,6 @@ int main(){
 				turn++;
 			}
 			
-			std::cout << players[turn].getPiece() << " is up next..." << std::endl;
 			if(!getTurnOption()){
 				std::cout << "Thanks for Playing" << std::endl;
 				return -1;
@@ -77,24 +83,70 @@ int main(){
 	return 1;
 }
 
-int playTurn(Game_Board &theBoard, Player &thePlayer, Die d1, Die d2, int turn){
+int playTurn(Game_Board* theBoard, Player* thePlayer, Die d1, Die d2, int turn){
 
 	int v1 = d1.rollDie();
 	int v2 = d2.rollDie();
 	int moveValue = v1 + v2;
 
-	std::cout << "The " << thePlayer.getPiece() << " is up!" << std::endl;
+	std::cout << "The " << thePlayer->getPiece() << " is up!" << std::endl;
 	std::cout << "Die rolled: " << v1 << " and " << v2 << "." << std::endl;
-	std::cout << "The " << thePlayer.getPiece() << " advances " << moveValue << " spaces!" << std::endl;
+	std::cout << "The " << thePlayer->getPiece() << " advances " << moveValue << " spaces!" << std::endl;
 
-	int index = thePlayer.getCurrentSpace();
-	Space *current = theBoard.findSpaceByIndex(index);
-	current->removePlayerFromSpace(thePlayer);
+	MoveAction move(thePlayer, theBoard, moveValue);
+	move.executeAction();
+	if(thePlayer->didPassGo()){
+		std::cout << thePlayer->getPiece() << " passed Go! Collects $200" << std::endl;
+		MoneyAction payForPassingGo;
+		theBank.withdraw(200);
+		payForPassingGo.payMoney(thePlayer, 200);
+	}
 
-	thePlayer.move(moveValue);
-	index = thePlayer.getCurrentSpace();
-	Space *newSpace = theBoard.findSpaceByIndex(index);
-	newSpace->addPlayerToSpace(thePlayer);
+
+	int choice = 1;
+	Space* currentSpace = theBoard->findSpaceByIndex(thePlayer->getCurrentSpace());
+	if(currentSpace->isOwnable()){
+		theBoard->printBoard();
+
+		if(thePlayer->ownsSpace(currentSpace)){
+			std::cout << "\t (" << choice << ") Sell this property for $" << (int)(currentSpace->getValue())*(3./4) << "? (y/n)" << std::endl;
+			if(yesOrNo()){
+				PropertyAction sellBankProperty(thePlayer, NULL, currentSpace, &theBank, false, true);
+				sellBankProperty.executeAction();
+				std::cout << players[turn].getPiece() << " now has $" << players[turn].getMoney() << std::endl;
+			}
+			choice++;
+		}else if(!currentSpace->isOwned()){
+			std::cout << "\t(" << choice << ") Buy this property for $" << currentSpace->getValue() << "? (y/n)" << std::endl;
+			if(yesOrNo()){
+				PropertyAction buyProperty(thePlayer, NULL, currentSpace, &theBank, true, true);
+				buyProperty.executeAction();
+				std::cout << players[turn].getPiece() << " now has $" << players[turn].getMoney() << std::endl;
+			}
+			choice++;
+		}else{
+			std::string theOwner = currentSpace->getOwner();
+			std::cout << "Darn! You have to pay " << theOwner << currentSpace->getRent() << "..." << std::endl;
+			MoneyAction transaction;
+			int amount = transaction.payMoney(currentSpace->getOwnerReference(), currentSpace->getRent());
+			transaction.takeMoney(thePlayer, amount);
+			std::cout << players[turn].getPiece() << " now has $" << players[turn].getMoney() << std::endl;
+			std::cout << theOwner << " now has $" << currentSpace->getOwnerReference()->getMoney() << std::endl;
+		}
+	}else if(currentSpace->hasAction()){
+		
+	}
+
+	//a test to see if players advance to go (0th index space) if landed on any right side space
+	for(int i = 11; i < 20; i++){
+		if(thePlayer->getCurrentSpace() == i){
+			std::cout << "The" << thePlayer->getPiece() << " advanced to GO!" << std::endl;
+			GoToAction goToGo(*thePlayer, *theBoard, *(theBoard->findSpaceByIndex(0)));
+			goToGo.executeAction();
+		}
+	}
+	theBoard->printBoard();
+
 
 	return turn;
 	
@@ -207,9 +259,17 @@ void printInstructions(){
 
 int getTurnOption(){
 
-	char x;
-	std::cout << "Ready to continue (y/n)? " << std::endl;
+	std::cout << players[turn].getPiece() << " is up next..." << std::endl;
+	std::cout << players[turn].getPiece() << "'s Money: $" << players[turn].getMoney() << std::endl;
 
+
+	std::cout << "Continue playing? ";
+	return yesOrNo();
+
+}
+
+int yesOrNo(){
+	char x;
 	do{
 
 	std::cin >> x;
@@ -218,28 +278,25 @@ int getTurnOption(){
 
 		std::cin.clear();
 		std::cin.ignore(10000, '\n'); //clear inputs up to 10,000 characters, or first newline
-		std::cout << "Please Enter a Valid Option (y, n, or enter key): ";
+		std::cout << "Please Enter a Valid Option (y for yes, n for no): ";
 		continue; //jump to while statement
 
 	}
 
-	
 	//a good integer entered
 	
 	std::cin.ignore(100000, '\n'); //clear the stream
 	break; //exit the loop
 
 	} while(true);
-	
+
 	int goOn;
 	if(x == 'y'){
 		goOn = 1;
 	}else{
 		goOn = 0;
 	}
-
 	return goOn;
-
 }
 
 int getOption(){

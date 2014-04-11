@@ -3,25 +3,31 @@
 #define SPACE_H
 
 #include <string>
-#include "Player.h"
 #include "Action.h"
+#include "Player.h"
+
+class Player;
+class Action;
 
 class Space{
 
 	private:
 		std::string name; //name of the space
-		Action action; //space's action
+		int index;
 		int nextSpace; //index of space that comes after
 		bool ownable; //whether or not the space is able to be owned
-		Player owner; //owner of the space
-		Player currentPlayers[4]; //array of players currently on the space
-		int numPlayersOnSpace; //number of players currently on the space	
+		int value;
+		int rent;
+		Player* owner; //owner of the space
+		Player* currentPlayers; //array of players currently on the space
+		int numPlayersOnSpace; //number of players currently on the space
+
+		Action* action;	
 
 	public:
-
 		//constructors
 		Space(); //creates ownable space with no players on it
-		Space(std::string name, int nextSpace, bool canOwn);
+		Space(std::string name, int nextSpace, bool canOwn, int newValue);
 		~Space();
 
 		//functions
@@ -35,10 +41,19 @@ class Space{
 		void setName(std::string newName);
 		std::string getName();
 
+		int getSpaceIndex();
+		int getValue();
+		int getRent();
+
+		void setAction(Action* anAction);
+		bool hasAction();
+		void executeAction();
+
 		//may not be useful, currenty unimplemented
 		std::string getOwner();
-		void setOwner(Player newOwner);
-		void setAction(Action anAction);
+		bool isOwned();
+		Player* getOwnerReference();
+		void setOwner(Player* newOwner);
 		void setNextSpace(int newNextspace);
 
 		

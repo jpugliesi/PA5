@@ -20,49 +20,56 @@
 	//occupies the spaces array with predefined spaces, as follows:
 	void Game_Board::occupySpaces(){
 
-			spaces[0] = Space("Go", 1, false); 			
-			spaces[1] = Space("Glassell", 2, true);
-			spaces[2] = Space("*Chest*", 3, false);	 	
-			spaces[3] = Space("Richmond", 4, true);
-			spaces[4] = Space("TAX", 5, false); 
-			spaces[5] = Space("El Sob", 6, true);
-			spaces[6] = Space("*THE  MAN*", 7, false); 
-			spaces[7] = Space("Terrace", 8, true);
-			spaces[8] = Space("El Cerrito", 9, true); 
-			spaces[9] = Space("Pinole", 10, true);
-			spaces[10] = Space("", 11, false); 
+			spaces[0] = Space("Go", 1, false, 0); 	//give GoAction		
+			spaces[1] = Space("Glassell", 2, true, 50);
+			spaces[2] = Space("*Chest*", 3, false, 60);	 	
+			spaces[3] = Space("Richmond", 4, true, 70);
+			spaces[4] = Space("TAX", 5, false, 0); 
+			spaces[5] = Space("El Sob", 6, true, 100);
+			spaces[6] = Space("*THE  MAN*", 7, false, 0); 
+			spaces[7] = Space("Terrace", 8, true, 110);
+			spaces[8] = Space("El Cerrito", 9, true, 120); 
+			spaces[9] = Space("Pinole", 10, true, 130);
+			spaces[10] = Space("", 11, false, 0); 
 
-			spaces[11] = Space("*Chest*", 12, false); 
-			spaces[12] = Space("Brooklyn", 13, true);
-			spaces[13] = Space("*THE  MAN*", 14, false); 
-			spaces[14] = Space("Siberia", 15, true);
-			spaces[15] = Space("", 16, false); 		
-			spaces[16] = Space("Austin", 17, true);
-			spaces[17] = Space("Memphis", 18, true); 
-			spaces[18] = Space("Wichita", 19, true);
-			spaces[19] = Space("*Chest*", 20, false);
+			spaces[11] = Space("*Chest*", 12, false, 0); 
+			spaces[12] = Space("Brooklyn", 13, true, 150);
+			spaces[13] = Space("*THE  MAN*", 14, false, 0); 
+			spaces[14] = Space("Siberia", 15, true, 150);
+			spaces[15] = Space("", 16, false, 0); 		
+			spaces[16] = Space("Austin", 17, true, 170);
+			spaces[17] = Space("Memphis", 18, true, 170); 
+			spaces[18] = Space("Wichita", 19, true, 180);
+			spaces[19] = Space("*Chest*", 20, false, 0);
 
-			spaces[20] = Space("", 21, false); 
-			spaces[21] = Space("Atlanta", 22, true);
-			spaces[22] = Space("", 23, false); 		
-			spaces[23] = Space("Tahoe", 24, true);
-			spaces[24] = Space("*Chest*", 25, false); 
-			spaces[25] = Space("Las Vegas", 26, true);
-			spaces[26] = Space("*THE  MAN*", 27, false); 
-			spaces[27] = Space("*Chest*", 28, false);
-			spaces[28] = Space("Chicago", 29, true); 
-			spaces[29] = Space("Seattle", 30, true);
-			spaces[30] = Space("", 31, false);
+			spaces[20] = Space("", 21, false, 0); 
+			spaces[21] = Space("Atlanta", 22, true, 200);
+			spaces[22] = Space("", 23, false, 0); 		
+			spaces[23] = Space("Tahoe", 24, true, 210);
+			spaces[24] = Space("*Chest*", 25, false, 0); 
+			spaces[25] = Space("Las Vegas", 26, true, 250);
+			spaces[26] = Space("*THE  MAN*", 27, false, 0); 
+			spaces[27] = Space("*Chest*", 28, false, 0);
+			spaces[28] = Space("Chicago", 29, true, 270); 
+			spaces[29] = Space("Seattle", 30, true, 300);
+			spaces[30] = Space("", 31, false, 0);
 
-			spaces[31] = Space("*THE  MAN*", 32, false); 
-			spaces[32] = Space("TAX", 33, false);
-			spaces[33] = Space("*THE  MAN*", 34, false); 
-			spaces[34] = Space("New York", 35, true);
-			spaces[35] = Space("*THE  MAN*", 36, false); 
-			spaces[36] = Space("TAX", 37, false);
-			spaces[37] = Space("*THE  MAN*", 38, false); 
-			spaces[38] = Space("TAX", 39, false);
-			spaces[39] = Space("San Fran", 0, true);
+			spaces[31] = Space("*THE  MAN*", 32, false, 0); 
+			spaces[32] = Space("TAX", 33, false, 0);
+			spaces[33] = Space("*THE  MAN*", 34, false, 0); 
+			spaces[34] = Space("New York", 35, true, 400);
+			spaces[35] = Space("*THE  MAN*", 36, false, 0); 
+			spaces[36] = Space("TAX", 37, false, 0);
+			spaces[37] = Space("*THE  MAN*", 38, false, 0); 
+			spaces[38] = Space("TAX", 39, false, 0);
+			spaces[39] = Space("San Fran", 0, true, 500);
+
+			for(int i = 0; i < NUM_SPACES; i++){
+				if(spaces[i].isOwnable() || spaces[i].getName() == ""){
+					spaces[i].setAction(NULL);
+				}
+				//else for THE MAN and TAX, and GO, and SPACE
+			}
 	}
 
 	//Prints out the game board

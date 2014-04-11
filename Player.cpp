@@ -1,5 +1,7 @@
 //Player.cpp
 #include "Player.h"
+#include "Space.h"
+#include <iostream>
 
 	/***** Constructors *****/
 	
@@ -8,7 +10,8 @@
 	Player::Player(){
 
 		piece = "";
-		money = 5000;
+		money = 1000;
+		passedGo = false;
 
 	}
 	Player::~Player(){
@@ -43,9 +46,18 @@
 		currentPosition += num;
 		if(currentPosition > 39){
 			int value = currentPosition;
+			passedGo = true;
 			currentPosition = value - 40;
 		}
 		return currentPosition;
+	}
+
+	bool Player::didPassGo(){
+		if(passedGo == true){
+			passedGo = false;
+			return true;
+		}
+		return false;
 	}
 
 	//gets amount of money player has as an int value
@@ -61,6 +73,42 @@
 	int Player::takeMoney(int amount){
 		money -= amount;
 		return amount;
+	}
+
+	void Player::getSpace(Space* space){
+		ownedSpaces.push_back(space);
+	}
+
+	Space* Player::looseSpace(int index){
+		Space* result;
+		for(int i = 0; i < ownedSpaces.size(); i++){
+			if (ownedSpaces[i]->getSpaceIndex() == index){
+				result = ownedSpaces[i];
+				ownedSpaces.erase(ownedSpaces.begin() + i);
+				return result;
+			}
+		}
+		return NULL;
+	}
+
+	bool Player::ownsSpace(Space* theSpace){
+
+		for(int i = 0; i < ownedSpaces.size(); i++){
+			if(ownedSpaces[i] == theSpace){
+				return true;
+			}
+		}
+		return false;
+	}
+
+	int Player::getNumOwnedSpaces(){
+		return ownedSpaces.size();
+	}
+
+	void Player::printOwnedSpaces(){
+		for(int i = 0; i < ownedSpaces.size(); i++){
+			std::cout << "\t" << ownedSpaces[i]->getName() << std::endl;
+		}
 	}
 
 

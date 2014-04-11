@@ -5,19 +5,21 @@
 	/***** Constructors *****/
 
 	//create MoneyAction with name "Default"
-	MoneyAction::MoneyAction() : Action() { }
-
-	//create MoneyAction with specific name newName
-	MoneyAction::MoneyAction(std::string newName) : Action(newName) { }
+	MoneyAction::MoneyAction() : Action("MoneyAction") { }
 
 	/***** Functions *****/
 
 	//pay p amount sum of money
-	void MoneyAction::payMoney(Player& p, int amount){
-		p.giveMoney(amount);
+	int MoneyAction::payMoney(Player* p, int amount){
+		p->giveMoney(amount);
+		return amount;
 	}
 	//take amount sum of money from player p
-	int MoneyAction::takeMoney(Player& p, int amount){
-		p.takeMoney(amount);
+	int MoneyAction::takeMoney(Player* p, int amount){
+		p->takeMoney(amount);
 		return amount;
+	}
+
+	void MoneyAction::executeAction(){
+		
 	}

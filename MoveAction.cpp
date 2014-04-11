@@ -1,20 +1,18 @@
 #include <iostream>
 #include "MoveAction.h"
 
+
 	/***** Constructors *****/
 
-	MoveAction::MoveAction(){
+	MoveAction::MoveAction() : Action("MoveAction"){
 
 	}
 
 	//create Moveaction of specific name and size
-	MoveAction::MoveAction(std::string newName, int size) : Action(newName){
-		amount = size;
-	}
-
-	//cretae moveaction with default name, specific size
-	MoveAction::MoveAction(int size) : Action(){
-		amount = size;
+	MoveAction::MoveAction(Player* p, Game_Board* board, int moveValue) : Action("MoveAction"){
+		player = p;
+		theBoard = board;
+		amount = moveValue;
 	}
 
 	//setAmount to move to size
@@ -25,4 +23,14 @@
 	//getAmount to move
 	int MoveAction::getAmount(){
 		return amount;
+	}
+	void MoveAction::executeAction(){
+		int index = player->getCurrentSpace();
+		Space *current = theBoard->findSpaceByIndex(index);
+		current->removePlayerFromSpace(*player);
+
+		player->move(amount);
+		index = player->getCurrentSpace();
+		Space *newSpace = theBoard->findSpaceByIndex(index);
+		newSpace->addPlayerToSpace(*player);
 	}
