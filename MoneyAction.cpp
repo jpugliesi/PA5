@@ -9,19 +9,18 @@
 
 	MoneyAction::MoneyAction(Player* p, int amt, bool paying) : Action("MoneyAction") { 
 
-		player = p;
+		Action::setActingPlayer(p);
 		amount = amt;
 		pay = paying;
 		description = "";
 
 	}
 
-	MoneyAction::MoneyAction(Player* p, int amt, bool paying, std::string desc) : Action("MoneyAction") { 
+	MoneyAction::MoneyAction(Player* p, int amt, bool paying, std::string desc) : Action("MoneyAction", desc) { 
 
-		player = p;
+		Action::setActingPlayer(p);
 		amount = amt;
 		pay = paying;
-		description = desc;
 
 	}
 
@@ -29,14 +28,14 @@
 
 	//pay p amount sum of money
 	int MoneyAction::payMoney(Player* p, int amt){
-		player = p;
+		Action::setActingPlayer(p);
 		amount = amt;
 		pay = true;
 		return amount;
 	}
 	//take amount sum of money from player p
 	int MoneyAction::takeMoney(Player* p, int amt){
-		player = p;
+		Action::setActingPlayer(p);
 		amount = amt;
 		pay = false;
 		return amount;
@@ -46,11 +45,8 @@
 		return amount;
 	}
 
-	void MoneyAction::setPlayer(Player* p){
-		player = p;
-	}
-
 	void MoneyAction::executeAction(){
+		Player* player = Action::getActingPlayer();
 		if(pay){
 			if(description != ""){
 				std::cout << description << std::endl;
@@ -64,6 +60,18 @@
 		}
 	}
 
-	std::string MoneyAction::getDescription(){
-		return description;
+	void MoneyAction::executeAction(Player* p){
+		Action::setActingPlayer(p);
+		Player* player = Action::getActingPlayer();
+		if(pay){
+			if(description != ""){
+				std::cout << description << std::endl;
+			}
+			player->giveMoney(amount);
+		}else{
+			if(description != ""){
+				std::cout << description << std::endl;
+			}
+			player->takeMoney(amount);
+		}
 	}

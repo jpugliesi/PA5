@@ -9,6 +9,7 @@ class Action{
 
 	protected:
 		std::string name; //name of the action
+		std::string description;
 		int value;
 		Player* actingPlayer;
 		Player* recievingPlayer;
@@ -17,12 +18,13 @@ class Action{
 		//constructors
 		Action();
 		Action(std::string newName);
+		Action(std::string newName, std::string desc);
 
 		//functions
 		void print_name(); //prints the name of the action
 		std::string getName();
 		virtual void executeAction() = 0;
-		void executeAction(Player*);
+		virtual void executeAction(Player*) = 0;
 
 		void setValue(int);
 		bool hasValue();
@@ -30,6 +32,11 @@ class Action{
 
 		void setActingPlayer(Player*);
 		void setRecievingPlayer(Player*);
+		Player* getActingPlayer();
+		Player* getRecievingPlayer();
+
+		void setDescription(std::string);
+		std::string getDescription();
 
 };
 

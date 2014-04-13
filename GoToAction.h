@@ -4,6 +4,8 @@
 #include "Space.h"
 #include "Game_Board.h"
 #include "Player.h"
+#include "Bank.h"
+#include <string>
 
 class GoToAction : public Action{
 
@@ -11,11 +13,13 @@ class GoToAction : public Action{
 		Space* currentSpace;
 		Space* newSpace;
 		Game_Board* theBoard;
-		Player* player;
+		Bank* theBank;
 	public:
 		GoToAction();
-		GoToAction(Player&, Game_Board&, Space&);
+		GoToAction(Player*, Game_Board*, Space*);
+		GoToAction(Player*, Game_Board*, Space*, std::string desc);
 		void executeAction();
+		void executeAction(Player* p);
 
 
 };

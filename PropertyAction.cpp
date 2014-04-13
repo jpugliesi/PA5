@@ -7,14 +7,25 @@
 
 	}
 	PropertyAction::PropertyAction(Player* p1, Player* p2, Space* cs, Bank* bank, bool buying, bool isbank, bool transfer) : Action("PropertyAction"){
-		player1 = p1;
-		player2 = p2;
+		Action::setActingPlayer(p1);
+		Action::setRecievingPlayer(p2);
 		currentSpace = cs;
 		theBank = bank;
 		willBuy = buying;
 		isFromBank = isbank;
 		isTransfer = transfer;
 	}
+
+	PropertyAction::PropertyAction(Player* p1, Player* p2, Space* cs, Bank* bank, bool buying, bool isbank, bool transfer, std::string desc) : Action("PropertyAction", desc){
+		Action::setActingPlayer(p1);
+		Action::setRecievingPlayer(p2);
+		currentSpace = cs;
+		theBank = bank;
+		willBuy = buying;
+		isFromBank = isbank;
+		isTransfer = transfer;
+	}
+
 	void PropertyAction::executeAction(){
 		if(isTransfer){
 			if(isFromBank){
@@ -31,7 +42,26 @@
 			else sellBankProperty();
 		}
 	}
+	void PropertyAction::executeAction(Player* p){
+		Action::setActingPlayer(p);
+		if(isTransfer){
+			if(isFromBank){
+				transferPropertiesToBank();
+			}else{
+				transferPropertiesToOtherPlayer();
+			}
+		}
+		else if(willBuy){
+			if(!isFromBank) buyProperty();
+			else buyBankProperty();
+		}else{
+			if(!isFromBank) sellProperty();
+			else sellBankProperty();
+		}
+	}
 	void PropertyAction::buyProperty(){
+		Player* player1 = getActingPlayer();
+		Player* player2 = getRecievingPlayer();
 		MoneyAction transaction(player1, currentSpace->getValue(), false);
 		transaction.executeAction();
 		int buyValue = transaction.getAmount();
@@ -43,6 +73,8 @@
 		player2->looseSpace(currentSpace->getSpaceIndex());
 	}
 	void PropertyAction::sellProperty(){
+		Player* player1 = getActingPlayer();
+		Player* player2 = getRecievingPlayer();
 		MoneyAction transaction(player1, currentSpace->getValue(), true);
 		transaction.executeAction();
 		int sellValue = transaction.getAmount();
@@ -56,6 +88,7 @@
 	}
 
 	void PropertyAction::buyBankProperty(){
+		Player* player1 = getActingPlayer();
 		MoneyAction transaction(player1, currentSpace->getValue(), false);
 		transaction.executeAction();
 		int buyValue = transaction.getAmount();
@@ -68,6 +101,7 @@
 		currentSpace->setOwner(player1);
 	}
 	void PropertyAction::sellBankProperty(){
+		Player* player1 = getActingPlayer();
 		int moneyToGain = (int)(currentSpace->getValue())*(3./4);
 		MoneyAction transaction(player1, moneyToGain, true);
 		int sellValue = transaction.getAmount();
@@ -86,6 +120,7 @@
 
 	void PropertyAction::transferPropertiesToBank(){
 		//transfer from player1 to Bank
+		Player* player1 = getActingPlayer();
 
 		for(int i = 0; i < player1->getNumOwnedSpaces(); i++){
 			Space* theSpace = player1->getOwnedSpace(i);
@@ -97,6 +132,10 @@
 
 	void PropertyAction::transferPropertiesToOtherPlayer(){
 		//transfer from player1 to player2
+
+		Player* player1 = getActingPlayer();
+		Player* player2 = getRecievingPlayer();
+
 		for(int i = 0; i < player1->getNumOwnedSpaces(); i++){
 			Space* theSpace = player1->getOwnedSpace(i);
 			player1->looseSpace(theSpace->getSpaceIndex());

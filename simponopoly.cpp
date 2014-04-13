@@ -16,7 +16,7 @@ int welcome();
 int getOption();
 int getTurnOption();
 int getNumPlayers();
-void populateDecks();
+void populateDecks(Game_Board*);
 
 void getPlayerInfo();
 
@@ -51,7 +51,10 @@ int main(){
 
 		getPlayerInfo();
 
-		Game_Board theBoard(numPlayers, &theMan, &chest);
+		Game_Board theBoard(numPlayers, &theBank, &theMan, &chest);
+
+		populateDecks(&theBoard);
+
 		Space* go = theBoard.findSpaceByIndex(0);
 		for(int i = 0; i < numPlayers; i++){
 			players[i].setPosition(0);
@@ -98,13 +101,6 @@ int playTurn(Game_Board* theBoard, Player* thePlayer, Die d1, Die d2, int turn){
 
 	MoveAction move(thePlayer, theBoard, moveValue);
 	move.executeAction();
-	if(thePlayer->didPassGo()){
-		std::cout << thePlayer->getPiece() << " passed Go! Collects $200" << std::endl;
-		MoneyAction payForPassingGo(thePlayer, 200, true);
-		theBank.withdraw(200);
-		payForPassingGo.executeAction();
-	}
-
 
 	int choice = 1;
 	bool owesOtherPlayer = false;
@@ -134,7 +130,7 @@ int playTurn(Game_Board* theBoard, Player* thePlayer, Die d1, Die d2, int turn){
 			owesOtherPlayer = true;
 			otherPlayer = currentSpace->getOwnerReference();
 			std::string theOwner = currentSpace->getOwner();
-			std::cout << "Darn! You have to pay " << theOwner << currentSpace->getRent() << "..." << std::endl;
+			std::cout << "Darn! You have to pay " << theOwner << " " << currentSpace->getRent() << "..." << std::endl;
 			MoneyAction transaction(otherPlayer, currentSpace->getRent(), true);
 			int amount = transaction.getAmount();
 			transaction.executeAction();
@@ -145,11 +141,13 @@ int playTurn(Game_Board* theBoard, Player* thePlayer, Die d1, Die d2, int turn){
 		}
 	}else if(currentSpace->hasAction()){
 		Action* theAction = currentSpace->getAction();
+		//if it is a TAX space
 		if(theAction->getName() == "MoneyAction"){
-			// theAction->setPlayer(thePlayer);
-			// theAction->executeAction();
-		}else if(theAction->getName() == "CardAction"){
-			// theAction->executeAction(thePlayer);
+			theAction->executeAction(thePlayer);
+		}
+		//if it is a *THE MAN* or Chest space
+		else if(theAction->getName() == "CardAction"){
+			theAction->executeAction(thePlayer);
 		}
 	}
 
@@ -172,8 +170,8 @@ int playTurn(Game_Board* theBoard, Player* thePlayer, Die d1, Die d2, int turn){
 	//a test to see if players advance to go (0th index space) if landed on any right side space
 	// for(int i = 11; i < 20; i++){
 	// 	if(thePlayer->getCurrentSpace() == i){
-	// 		std::cout << "The" << thePlayer->getPiece() << " advanced to GO!" << std::endl;
-	// 		GoToAction goToGo(*thePlayer, *theBoard, *(theBoard->findSpaceByIndex(0)));
+	// 		std::cout << "The " << thePlayer->getPiece() << " advanced to GO!" << std::endl;
+	// 		GoToAction goToGo(thePlayer, theBoard, theBoard->findSpaceByIndex(0));
 	// 		goToGo.executeAction();
 	// 	}
 	// }
@@ -194,7 +192,7 @@ int gameOver(){
 	return over; //temporary
 }
 
-void populateDecks(){
+void populateDecks(Game_Board* theBoard){
 	std::string description = "You didn't file your damn taxes. Pay THE MAN a fine of $100";
 	theMan.addCard(new MoneyAction(NULL, 100, false, description));
 	description = "You were caught J-walking. Pay ticket of $200.";
@@ -235,6 +233,20 @@ void populateDecks(){
 	theMan.addCard(new MoneyAction(NULL, 200, true, description));
 	description = "You are a good person. Here is $50.";
 	theMan.addCard(new MoneyAction(NULL, 50, true, description));
+	description = "You have been exiled to Siberia.";
+	//14 is siberia's index in the gameboard spaces array
+	theMan.addCard(new GoToAction(NULL, theBoard, theBoard->findSpaceByIndex(14), description));
+
+	description = "Advance 3 spaces.";
+	chest.addCard(new MoveAction(NULL, theBoard, 3, description));
+	description = "Advance 20 spaces.";
+	chest.addCard(new MoveAction(NULL, theBoard, 20, description));
+	description = "You won the ugly pagent. Collect $50";
+	chest.addCard(new MoneyAction(NULL, 50, true, description));
+
+
+	theMan.shuffle();
+	chest.shuffle();
 
 
 

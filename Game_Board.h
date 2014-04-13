@@ -5,6 +5,7 @@
 #include <string>
 #include "Space.h"
 #include "Deck.h"
+#include "Bank.h"
 
 class Game_Board{
 	public:
@@ -12,18 +13,20 @@ class Game_Board{
 		const static int NUM_SPACES = 40;
 		
 		//constructors
-		Game_Board(int, Deck*, Deck*);
+		Game_Board(int, Bank*, Deck*, Deck*);
 		~Game_Board();
 
 		//functions
 		void printBoard();
 		Space* findSpaceByIndex(int index);
+		Bank* getBank(); //returns a pointer to the Bank
 
 	private:
 		//variables
 		const static int SPACE_WIDTH = 12; //number of characters in the width of a space
 		const static int SPACES_IN_ROW = 11; //number of spaces in a row
 		int num_players; //number of players currently in the game
+		Bank* theBank;
 		Deck* theManDeck; //Deck of THE MAN cards
 		Deck* theChestDeck; //Deck of Chest cards
 

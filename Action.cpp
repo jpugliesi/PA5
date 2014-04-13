@@ -6,11 +6,17 @@
 
 	//Default Constructor creates action with name "Default"
 	Action::Action(){
-		name = "Default"; 
+		name = "Action"; 
+		description = "";
 	}
 	//Constructor that accepts a string to set as the action's name
 	Action::Action(std::string newName){
 		name = newName;
+		description = "";
+	}
+	Action::Action(std::string newName, std::string desc){
+		name = newName;
+		description = desc;
 	}
 
 	/***** Functions *****/
@@ -45,6 +51,18 @@
 		recievingPlayer = p;
 	}
 
-	void executeAction(Player* p){
-		
+	Player* Action::getActingPlayer(){
+		return actingPlayer;
+	}
+	
+	Player* Action::getRecievingPlayer(){
+		return recievingPlayer;
+	}
+
+	void Action::setDescription(std::string desc){
+		description = desc;
+	}
+
+	std::string Action::getDescription(){
+		return description;
 	}

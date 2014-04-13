@@ -3,12 +3,11 @@
 #include "Player.h"
 #include "Space.h"
 #include "Bank.h"
+#include <string>
 
 class PropertyAction : public Action{
 
 	private:
-		Player* player1;
-		Player* player2;
 		Space* currentSpace;
 		bool willBuy;
 		bool isFromBank;
@@ -27,7 +26,9 @@ class PropertyAction : public Action{
 	public:
 		PropertyAction();
 		PropertyAction(Player* p1, Player* p2, Space* cs, Bank* bank, bool buyingIt, bool isbank, bool transfer);
+		PropertyAction(Player* p1, Player* p2, Space* cs, Bank* bank, bool buyingIt, bool isbank, bool transfer, std::string desc);
 		void executeAction();
+		void executeAction(Player*);
 		int getPropertyActionValue();
 
 };

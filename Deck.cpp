@@ -17,8 +17,10 @@
 	}
 
 	void Deck::getAndExecuteCard(Player* p){
+		cards.front()->Action::setActingPlayer(p);
 		Action* tmp= cards.front();
 		cards.front()->executeAction();
+		tmp->setActingPlayer(NULL);
 		cards.push_back(tmp);
 		cards.erase(cards.begin());
 	}

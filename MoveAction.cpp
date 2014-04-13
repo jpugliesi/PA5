@@ -1,5 +1,6 @@
 #include <iostream>
 #include "MoveAction.h"
+#include "MoneyAction.h"
 
 
 	/***** Constructors *****/
@@ -10,8 +11,16 @@
 
 	//create Moveaction of specific name and size
 	MoveAction::MoveAction(Player* p, Game_Board* board, int moveValue) : Action("MoveAction"){
-		player = p;
+		Action::setActingPlayer(p);
 		theBoard = board;
+		theBank = theBoard->getBank();
+		amount = moveValue;
+	}
+
+	MoveAction::MoveAction(Player* p, Game_Board* board, int moveValue, std::string desc) : Action("MoveAction", desc){
+		Action::setActingPlayer(p);
+		theBoard = board;
+		theBank = theBoard->getBank();
 		amount = moveValue;
 	}
 
@@ -25,11 +34,37 @@
 		return amount;
 	}
 	void MoveAction::executeAction(){
+		Player* player = Action::getActingPlayer();
 		int index = player->getCurrentSpace();
 		Space *current = theBoard->findSpaceByIndex(index);
 		current->removePlayerFromSpace(*player);
 
 		player->move(amount);
+		if(player->didPassGo()){
+			std::cout << player->getPiece() << " passed Go! Collect $200." << std::endl;
+			MoneyAction payForPassingGo(player, 200, true);
+			theBank->withdraw(200);
+			payForPassingGo.executeAction();
+		}
+		index = player->getCurrentSpace();
+		Space *newSpace = theBoard->findSpaceByIndex(index);
+		newSpace->addPlayerToSpace(*player);
+	}
+
+	void MoveAction::executeAction(Player* p){
+		Action::setActingPlayer(p);
+		Player* player = Action::getActingPlayer();
+		int index = player->getCurrentSpace();
+		Space *current = theBoard->findSpaceByIndex(index);
+		current->removePlayerFromSpace(*player);
+
+		player->move(amount);
+		if(player->didPassGo()){
+			std::cout << player->getPiece() << " passed Go! Collect $200." << std::endl;
+			MoneyAction payForPassingGo(player, 200, true);
+			theBank->withdraw(200);
+			payForPassingGo.executeAction();
+		}
 		index = player->getCurrentSpace();
 		Space *newSpace = theBoard->findSpaceByIndex(index);
 		newSpace->addPlayerToSpace(*player);

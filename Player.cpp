@@ -32,6 +32,9 @@
 
 	//sets player's current position index
 	int Player::setPosition(int newPosition){
+		if(newPosition < currentPosition){
+			passedGo = true;
+		}
 		currentPosition = newPosition;
 		return currentPosition;
 	}

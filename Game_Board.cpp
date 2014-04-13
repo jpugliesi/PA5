@@ -11,8 +11,9 @@
 	/***** Constructors *****/
 
 	//Creates a game board with number of players playing, and occupies the spaces
-	Game_Board::Game_Board(int numPlayers, Deck* theMan, Deck* chestDeck){
+	Game_Board::Game_Board(int numPlayers, Bank* bank, Deck* theMan, Deck* chestDeck){
 		num_players = numPlayers;
+		theBank = bank;
 		theManDeck = theMan;
 		theChestDeck = chestDeck;
 		occupySpaces();
@@ -73,10 +74,12 @@
 					spaces[i].setAction(NULL);
 				}
 				//else for THE MAN and TAX, and GO, and SPACE
-				else if(spaces[i].getName() == "* THE  MAN*"){
+				else if(spaces[i].getName() == "*THE  MAN*"){
 					spaces[i].setAction(new CardAction(theManDeck));
 				}else if(spaces[i].getName() == "TAX"){
 					spaces[i].setAction(new MoneyAction(NULL, 100, false, "Woops! Pay tax of $100."));
+				}else if(spaces[i].getName() == "*Chest*"){
+					spaces[i].setAction(new CardAction(theChestDeck));
 				}
 			}
 			
@@ -377,4 +380,8 @@
 	//finds and returns a pointer to a Space object at a provided index
 	Space* Game_Board::findSpaceByIndex(int index){
 		return &(spaces[index]);
+	}
+
+	Bank* Game_Board::getBank(){
+		return theBank;
 	}
