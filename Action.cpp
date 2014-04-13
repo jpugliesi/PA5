@@ -44,3 +44,7 @@
 	void Action::setRecievingPlayer(Player* p){
 		recievingPlayer = p;
 	}
+
+	void executeAction(Player* p){
+		
+	}

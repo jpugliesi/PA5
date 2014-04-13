@@ -4,6 +4,7 @@
 
 #include <string>
 #include "Space.h"
+#include "Deck.h"
 
 class Game_Board{
 	public:
@@ -11,7 +12,7 @@ class Game_Board{
 		const static int NUM_SPACES = 40;
 		
 		//constructors
-		Game_Board(int);
+		Game_Board(int, Deck*, Deck*);
 		~Game_Board();
 
 		//functions
@@ -23,6 +24,8 @@ class Game_Board{
 		const static int SPACE_WIDTH = 12; //number of characters in the width of a space
 		const static int SPACES_IN_ROW = 11; //number of spaces in a row
 		int num_players; //number of players currently in the game
+		Deck* theManDeck; //Deck of THE MAN cards
+		Deck* theChestDeck; //Deck of Chest cards
 
 		/*** functions ***/
 

@@ -5,12 +5,16 @@
 #include <cmath>
 #include <sstream>
 #include "Game_Board.h"
+#include "CardAction.h"
+#include "MoneyAction.h"
 
 	/***** Constructors *****/
 
 	//Creates a game board with number of players playing, and occupies the spaces
-	Game_Board::Game_Board(int numPlayers){
+	Game_Board::Game_Board(int numPlayers, Deck* theMan, Deck* chestDeck){
 		num_players = numPlayers;
+		theManDeck = theMan;
+		theChestDeck = chestDeck;
 		occupySpaces();
 	}
 
@@ -69,7 +73,13 @@
 					spaces[i].setAction(NULL);
 				}
 				//else for THE MAN and TAX, and GO, and SPACE
+				else if(spaces[i].getName() == "* THE  MAN*"){
+					spaces[i].setAction(new CardAction(theManDeck));
+				}else if(spaces[i].getName() == "TAX"){
+					spaces[i].setAction(new MoneyAction(NULL, 100, false, "Woops! Pay tax of $100."));
+				}
 			}
+			
 	}
 
 	//Prints out the game board

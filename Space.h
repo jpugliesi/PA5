@@ -46,6 +46,7 @@ class Space{
 		int getRent();
 
 		void setAction(Action* anAction);
+		Action* getAction();
 		bool hasAction();
 		void executeAction();
 

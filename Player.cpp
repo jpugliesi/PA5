@@ -65,6 +65,12 @@
 		return money;
 	}
 
+	//returns true if player has money, false if 0;
+	bool Player::hasMoney(){
+		if(money > 0) return true;
+		return false;
+	}
+
 	//adds money of amount 'amount' to player's money
 	void Player::giveMoney(int amount){
 		money += amount;
@@ -75,8 +81,12 @@
 		return amount;
 	}
 
-	void Player::getSpace(Space* space){
+	void Player::addSpace(Space* space){
 		ownedSpaces.push_back(space);
+	}
+
+	Space* Player::getOwnedSpace(int i){
+		return ownedSpaces[i];
 	}
 
 	Space* Player::looseSpace(int index){

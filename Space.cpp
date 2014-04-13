@@ -126,6 +126,10 @@
 		action = newAction;
 	}
 
+	Action* Space::getAction(){
+		return action;
+	}
+
 	bool Space::hasAction(){
 		if(action != NULL) return true;
 		return false;

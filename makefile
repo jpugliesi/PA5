@@ -1,4 +1,4 @@
-OBJS = Action.o MoneyAction.o MoveAction.o GoToAction.o PropertyAction.o Bank.o Card.o Game_Board.o Player.o Space.o Die.o simponopoly.o
+OBJS = Action.o MoneyAction.o MoveAction.o GoToAction.o PropertyAction.o CardAction.o Bank.o Card.o Deck.o Game_Board.o Player.o Space.o Die.o simponopoly.o
 CC = g++
 Debug = -g
 CFLAGS = -Wall -c $(DEBUG)
@@ -24,11 +24,17 @@ GoToAction.o : GoToAction.cpp GoToAction.h Action.h
 PropertyAction.o : PropertyAction.cpp PropertyAction.h Action.h
 	$(CC) $(CFLAGS) PropertyAction.cpp
 
+CardAction.o : CardAction.cpp CardAction.h Action.h
+	$(CC) $(CFLAGS) CardAction.cpp
+
 Bank.o : Bank.cpp Bank.h
 	$(CC) $(CFLAGS) Bank.cpp
 
 Card.o : Card.cpp Card.h
 	$(CC) $(CFLAGS) Card.cpp
+
+Deck.o : Deck.cpp Deck.h
+	$(CC) $(CFLAGS) Deck.cpp
 
 Game_Board.o : Game_Board.cpp Game_Board.h Space.h
 	$(CC) $(CFLAGS) Game_Board.cpp

@@ -3,7 +3,7 @@
 #include "Space.h"
 #include "Player.h"
 #include "Action.h"
-#include "Card.h"
+#include "Deck.h"
 #include "Bank.h"
 #include "Die.h"
 #include "MoneyAction.h"
@@ -16,6 +16,7 @@ int welcome();
 int getOption();
 int getTurnOption();
 int getNumPlayers();
+void populateDecks();
 
 void getPlayerInfo();
 
@@ -36,6 +37,8 @@ Player *players;
 int turn = 0;
 
 Bank theBank;
+Deck theMan;
+Deck chest;
 
 int main(){
 
@@ -48,7 +51,7 @@ int main(){
 
 		getPlayerInfo();
 
-		Game_Board theBoard(numPlayers);
+		Game_Board theBoard(numPlayers, &theMan, &chest);
 		Space* go = theBoard.findSpaceByIndex(0);
 		for(int i = 0; i < numPlayers; i++){
 			players[i].setPosition(0);
@@ -97,56 +100,86 @@ int playTurn(Game_Board* theBoard, Player* thePlayer, Die d1, Die d2, int turn){
 	move.executeAction();
 	if(thePlayer->didPassGo()){
 		std::cout << thePlayer->getPiece() << " passed Go! Collects $200" << std::endl;
-		MoneyAction payForPassingGo;
+		MoneyAction payForPassingGo(thePlayer, 200, true);
 		theBank.withdraw(200);
-		payForPassingGo.payMoney(thePlayer, 200);
+		payForPassingGo.executeAction();
 	}
 
 
 	int choice = 1;
+	bool owesOtherPlayer = false;
+	Player* otherPlayer; //other player who might be interacted with (eg. has to pay rent to)
+
 	Space* currentSpace = theBoard->findSpaceByIndex(thePlayer->getCurrentSpace());
 	if(currentSpace->isOwnable()){
 		theBoard->printBoard();
 
 		if(thePlayer->ownsSpace(currentSpace)){
-			std::cout << "\t (" << choice << ") Sell this property for $" << (int)(currentSpace->getValue())*(3./4) << "? (y/n)" << std::endl;
+			std::cout << "\t (" << choice << ") Sell " << currentSpace->getName() << " to Bank for $" << (int)(currentSpace->getValue())*(3./4) << "? (y/n)" << std::endl;
 			if(yesOrNo()){
-				PropertyAction sellBankProperty(thePlayer, NULL, currentSpace, &theBank, false, true);
+				PropertyAction sellBankProperty(thePlayer, NULL, currentSpace, &theBank, false, true, false);
 				sellBankProperty.executeAction();
 				std::cout << players[turn].getPiece() << " now has $" << players[turn].getMoney() << std::endl;
 			}
 			choice++;
 		}else if(!currentSpace->isOwned()){
-			std::cout << "\t(" << choice << ") Buy this property for $" << currentSpace->getValue() << "? (y/n)" << std::endl;
+			std::cout << "\t(" << choice << ") Buy " << currentSpace->getName() << " for $" << currentSpace->getValue() << "? (y/n)" << std::endl;
 			if(yesOrNo()){
-				PropertyAction buyProperty(thePlayer, NULL, currentSpace, &theBank, true, true);
+				PropertyAction buyProperty(thePlayer, NULL, currentSpace, &theBank, true, true, false);
 				buyProperty.executeAction();
 				std::cout << players[turn].getPiece() << " now has $" << players[turn].getMoney() << std::endl;
 			}
 			choice++;
 		}else{
+			owesOtherPlayer = true;
+			otherPlayer = currentSpace->getOwnerReference();
 			std::string theOwner = currentSpace->getOwner();
 			std::cout << "Darn! You have to pay " << theOwner << currentSpace->getRent() << "..." << std::endl;
-			MoneyAction transaction;
-			int amount = transaction.payMoney(currentSpace->getOwnerReference(), currentSpace->getRent());
+			MoneyAction transaction(otherPlayer, currentSpace->getRent(), true);
+			int amount = transaction.getAmount();
+			transaction.executeAction();
 			transaction.takeMoney(thePlayer, amount);
+			transaction.executeAction();
 			std::cout << players[turn].getPiece() << " now has $" << players[turn].getMoney() << std::endl;
-			std::cout << theOwner << " now has $" << currentSpace->getOwnerReference()->getMoney() << std::endl;
+			std::cout << theOwner << " now has $" << otherPlayer->getMoney() << std::endl;
 		}
 	}else if(currentSpace->hasAction()){
-		
+		Action* theAction = currentSpace->getAction();
+		if(theAction->getName() == "MoneyAction"){
+			// theAction->setPlayer(thePlayer);
+			// theAction->executeAction();
+		}else if(theAction->getName() == "CardAction"){
+			// theAction->executeAction(thePlayer);
+		}
+	}
+
+	if(!thePlayer->hasMoney()){
+		if(owesOtherPlayer){
+			std::cout << thePlayer->getPiece() << " is out of money, and now owes " << otherPlayer->getPiece() << " all his property. Sorry!" << std::endl;
+			PropertyAction transferAllProperty(thePlayer, otherPlayer, NULL, &theBank, false, false, true);
+			transferAllProperty.executeAction();
+		}else{
+			std::cout << thePlayer->getPiece() << " is out of money, and now owes The Bank all his property. Sorry!" << std::endl;
+			std::cout << "Loosing:" << std::endl;
+			thePlayer->printOwnedSpaces();
+
+			PropertyAction transferAllProperty(thePlayer, NULL, NULL, &theBank, false, true, true);
+			transferAllProperty.executeAction();
+		}
+
 	}
 
 	//a test to see if players advance to go (0th index space) if landed on any right side space
-	for(int i = 11; i < 20; i++){
-		if(thePlayer->getCurrentSpace() == i){
-			std::cout << "The" << thePlayer->getPiece() << " advanced to GO!" << std::endl;
-			GoToAction goToGo(*thePlayer, *theBoard, *(theBoard->findSpaceByIndex(0)));
-			goToGo.executeAction();
-		}
-	}
-	theBoard->printBoard();
+	// for(int i = 11; i < 20; i++){
+	// 	if(thePlayer->getCurrentSpace() == i){
+	// 		std::cout << "The" << thePlayer->getPiece() << " advanced to GO!" << std::endl;
+	// 		GoToAction goToGo(*thePlayer, *theBoard, *(theBoard->findSpaceByIndex(0)));
+	// 		goToGo.executeAction();
+	// 	}
+	// }
 
+
+	theBoard->printBoard();
 
 	return turn;
 	
@@ -159,6 +192,52 @@ int gameOver(){
 	}
 
 	return over; //temporary
+}
+
+void populateDecks(){
+	std::string description = "You didn't file your damn taxes. Pay THE MAN a fine of $100";
+	theMan.addCard(new MoneyAction(NULL, 100, false, description));
+	description = "You were caught J-walking. Pay ticket of $200.";
+	theMan.addCard(new MoneyAction(NULL, 200, false, description));
+	description = "You made a citizen's arrest! Collect reward of $200.";
+	theMan.addCard(new MoneyAction(NULL, 200, true, description));
+	description = "You became a high ranking government official. Collect salary of $150.";
+	theMan.addCard(new MoneyAction(NULL, 150, true, description));
+	description = "You jeopordized a top-secret mission. Pay fine of $300";
+	theMan.addCard(new MoneyAction(NULL, 300, false, description));
+	description = "THE MAN is watching you. Pay $100 for tin-foil hat.";
+	theMan.addCard(new MoneyAction(NULL, 100, false, description));
+	description = "You get a tax write-off. Collect $50.";
+	theMan.addCard(new MoneyAction(NULL, 50, true, description));
+	description = "You were caught speeding. Pay ticket of $250.";
+	theMan.addCard(new MoneyAction(NULL, 250, false, description));
+	description = "You littered! How dare you!. Pay find of $200.";
+	theMan.addCard(new MoneyAction(NULL, 200, false, description));
+	description = "You won Ms. America! Collect $400.";
+	theMan.addCard(new MoneyAction(NULL, 400, true, description));
+	description = "You got a fat research stipend! Collect $300.";
+	theMan.addCard(new MoneyAction(NULL, 300, true, description));
+	description = "You are disliked. Pay $50.";
+	theMan.addCard(new MoneyAction(NULL, 50, false, description));
+	description = "You skipped jury duty. Pay fine of $100.";
+	theMan.addCard(new MoneyAction(NULL, 100, false, description));
+	description = "You attended jury duty. Collect compensation of $100.";
+	theMan.addCard(new MoneyAction(NULL, 100, true, description));
+	description = "THE MAN is poor. Give him $150.";
+	theMan.addCard(new MoneyAction(NULL, 150, false, description));
+	description = "You are poor. Collect handout of $100.";
+	theMan.addCard(new MoneyAction(NULL, 100, true, description));
+	description = "You are a menace to society. Pay $150 and repent!";
+	theMan.addCard(new MoneyAction(NULL, 150, false, description));
+	description = "You know too much. Here. Take this and shut up.";
+	theMan.addCard(new MoneyAction(NULL, 200, true, description));
+	description = "You are an oil mongol. Respect us! Here's $200";
+	theMan.addCard(new MoneyAction(NULL, 200, true, description));
+	description = "You are a good person. Here is $50.";
+	theMan.addCard(new MoneyAction(NULL, 50, true, description));
+
+
+
 }
 
 void getPlayerInfo(){

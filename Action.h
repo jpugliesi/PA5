@@ -22,6 +22,7 @@ class Action{
 		void print_name(); //prints the name of the action
 		std::string getName();
 		virtual void executeAction() = 0;
+		void executeAction(Player*);
 
 		void setValue(int);
 		bool hasValue();
