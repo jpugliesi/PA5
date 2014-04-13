@@ -107,9 +107,17 @@ int playTurn(Game_Board* theBoard, Player* thePlayer, Die d1, Die d2, int turn){
 	Player* otherPlayer; //other player who might be interacted with (eg. has to pay rent to)
 
 	Space* currentSpace = theBoard->findSpaceByIndex(thePlayer->getCurrentSpace());
-	if(currentSpace->isOwnable()){
-		theBoard->printBoard();
 
+	if(currentSpace->hasAction()){
+		Action* theAction = currentSpace->getAction();
+
+		theAction->executeAction(thePlayer);
+
+	}
+	theBoard->printBoard();
+
+	currentSpace = theBoard->findSpaceByIndex(thePlayer->getCurrentSpace());
+	if(currentSpace->isOwnable()){
 		if(thePlayer->ownsSpace(currentSpace)){
 			std::cout << "\t (" << choice << ") Sell " << currentSpace->getName() << " to Bank for $" << (int)(currentSpace->getValue())*(3./4) << "? (y/n)" << std::endl;
 			if(yesOrNo()){
@@ -139,16 +147,7 @@ int playTurn(Game_Board* theBoard, Player* thePlayer, Die d1, Die d2, int turn){
 			std::cout << players[turn].getPiece() << " now has $" << players[turn].getMoney() << std::endl;
 			std::cout << theOwner << " now has $" << otherPlayer->getMoney() << std::endl;
 		}
-	}else if(currentSpace->hasAction()){
-		Action* theAction = currentSpace->getAction();
-		//if it is a TAX space
-		if(theAction->getName() == "MoneyAction"){
-			theAction->executeAction(thePlayer);
-		}
-		//if it is a *THE MAN* or Chest space
-		else if(theAction->getName() == "CardAction"){
-			theAction->executeAction(thePlayer);
-		}
+		theBoard->printBoard();
 	}
 
 	if(!thePlayer->hasMoney()){
@@ -164,7 +163,6 @@ int playTurn(Game_Board* theBoard, Player* thePlayer, Die d1, Die d2, int turn){
 			PropertyAction transferAllProperty(thePlayer, NULL, NULL, &theBank, false, true, true);
 			transferAllProperty.executeAction();
 		}
-
 	}
 
 	//a test to see if players advance to go (0th index space) if landed on any right side space
@@ -175,9 +173,6 @@ int playTurn(Game_Board* theBoard, Player* thePlayer, Die d1, Die d2, int turn){
 	// 		goToGo.executeAction();
 	// 	}
 	// }
-
-
-	theBoard->printBoard();
 
 	return turn;
 	
@@ -192,6 +187,7 @@ int gameOver(){
 	return over; //temporary
 }
 
+// add cards to THE MAN deck and Chest Deck
 void populateDecks(Game_Board* theBoard){
 	std::string description = "You didn't file your damn taxes. Pay THE MAN a fine of $100";
 	theMan.addCard(new MoneyAction(NULL, 100, false, description));
@@ -243,8 +239,20 @@ void populateDecks(Game_Board* theBoard){
 	chest.addCard(new MoveAction(NULL, theBoard, 20, description));
 	description = "You won the ugly pagent. Collect $50";
 	chest.addCard(new MoneyAction(NULL, 50, true, description));
+	description = "You won a trip to Las Vegas!";
+	chest.addCard(new GoToAction(NULL, theBoard, theBoard->findSpaceByIndex(25), description));
+	description = "Pack up and move to El Sob.";
+	chest.addCard(new GoToAction(NULL, theBoard, theBoard->findSpaceByIndex(5), description));
+	description = "Meet THE MAN";
+	chest.addCard(new GoToAction(NULL, theBoard, theBoard->findSpaceByIndex(13), description));
+	description = "They call it Debt Row...";
+	chest.addCard(new GoToAction(NULL, theBoard, theBoard->findSpaceByIndex(31), description));
+	description = "They call it Debt Row...";
+	chest.addCard(new GoToAction(NULL, theBoard, theBoard->findSpaceByIndex(31), description));
+	description = "Pack up and move to Brooklyn.";
+	chest.addCard(new GoToAction(NULL, theBoard, theBoard->findSpaceByIndex(5), description));
 
-
+	//shuffle dem decks
 	theMan.shuffle();
 	chest.shuffle();
 

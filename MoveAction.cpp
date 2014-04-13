@@ -40,6 +40,9 @@
 		current->removePlayerFromSpace(*player);
 
 		player->move(amount);
+		if(description != ""){
+			std::cout << description << std::endl;
+		}
 		if(player->didPassGo()){
 			std::cout << player->getPiece() << " passed Go! Collect $200." << std::endl;
 			MoneyAction payForPassingGo(player, 200, true);
@@ -49,6 +52,10 @@
 		index = player->getCurrentSpace();
 		Space *newSpace = theBoard->findSpaceByIndex(index);
 		newSpace->addPlayerToSpace(*player);
+		if(newSpace->getName() != ""){
+			std::cout << player->getPiece() << " moved to " << newSpace->getName() << std::endl;
+		}
+
 	}
 
 	void MoveAction::executeAction(Player* p){
@@ -59,6 +66,9 @@
 		current->removePlayerFromSpace(*player);
 
 		player->move(amount);
+		if(description != ""){
+			std::cout << description << std::endl;
+		}
 		if(player->didPassGo()){
 			std::cout << player->getPiece() << " passed Go! Collect $200." << std::endl;
 			MoneyAction payForPassingGo(player, 200, true);
@@ -68,4 +78,8 @@
 		index = player->getCurrentSpace();
 		Space *newSpace = theBoard->findSpaceByIndex(index);
 		newSpace->addPlayerToSpace(*player);
+		if(newSpace->getName() != ""){
+			std::cout << player->getPiece() << " moved to " << newSpace->getName() << std::endl;
+		}
+
 	}

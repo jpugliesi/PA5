@@ -31,12 +31,16 @@
 		currentSpace->removePlayerFromSpace(*player);
 
 		player->setPosition(newSpace->getSpaceIndex());
+		if(description != ""){
+			std::cout << description << std::endl;
+		}
 		if(player->didPassGo()){
 			MoneyAction passGo(player, 200, true, "You passed Go. Collect $200.");
 			theBank->withdraw(200);
 			passGo.executeAction();
 		}
 		newSpace->addPlayerToSpace(*player);
+		std::cout << player->getPiece() << " moved to " << newSpace->getName() << "!" << std::endl;
 		
 	}
 
@@ -48,11 +52,15 @@
 		currentSpace->removePlayerFromSpace(*player);
 
 		player->setPosition(newSpace->getSpaceIndex());
+		if(description != ""){
+			std::cout << description << std::endl;
+		}
 		if(player->didPassGo()){
 			MoneyAction passGo(player, 200, true, "You passed Go. Collect $200.");
 			theBank->withdraw(200);
 			passGo.executeAction();
 		}
 		newSpace->addPlayerToSpace(*player);
+		std::cout << player->getPiece() << " moved to " << newSpace->getName() << "!" << std::endl;
 		
 	}
