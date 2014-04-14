@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 #include "Game_Board.h"
 #include "Space.h"
 #include "Player.h"
@@ -33,7 +34,7 @@ const int NUM_PIECES = 10;
 
 std::string pieces[NUM_PIECES];
 int numPlayers;
-Player *players;
+std::vector<Player> players;
 int turn = 0;
 
 Bank theBank;
@@ -47,7 +48,6 @@ int main(){
 	if(welcome()){
 
 		numPlayers = getNumPlayers();
-		players = new Player[numPlayers];
 
 		getPlayerInfo();
 
@@ -57,7 +57,7 @@ int main(){
 
 		Space* go = theBoard.findSpaceByIndex(0);
 		for(int i = 0; i < numPlayers; i++){
-			players[i].setPosition(0);
+			players[i].setInitialPosition();
 			go->addPlayerToSpace(players[i]);
 		}
 		theBoard.printBoard();
@@ -66,30 +66,36 @@ int main(){
 		Die die2;
 		while(!gameOver()){
 
-			Player *playerWithTurn = &(players[turn]);
-			turn = playTurn(&theBoard, playerWithTurn, die1, die2, turn);
+			Player* playerWithTurn = &(players[turn]);
+			int result = playTurn(&theBoard, playerWithTurn, die1, die2, turn);
 
+			if(result == -1){
+				std::cout << players[turn].getPiece() << " has lost." << std::endl;
+				players.erase(players.begin() + turn);
+				numPlayers = players.size();
+				theBoard.updateNumPlayers(numPlayers);
+			}
 			if(turn == numPlayers-1){
 				turn = 0;
 			}else{
 				turn++;
 			}
 			
-			if(!getTurnOption()){
-				std::cout << "Thanks for Playing" << std::endl;
-				return -1;
+			if(!gameOver()){
+				if(!getTurnOption()){
+					std::cout << "Thanks for Playing" << std::endl;
+					return -1;
+				}
 			}
-			
-
 		}
+		std::cout << players[0].getPiece() << " is the Winner!" << std::endl;
+		std::cout << "Thanks for Playing" << std::endl;
 
 	}
-
-	delete [] players;
 	return 1;
 }
 
-int playTurn(Game_Board* theBoard, Player* thePlayer, Die d1, Die d2, int turn){
+int playTurn(Game_Board* theBoard, Player* thePlayer, Die d1, Die d2, int theTurn){
 
 	int v1 = d1.rollDie();
 	int v2 = d2.rollDie();
@@ -123,7 +129,7 @@ int playTurn(Game_Board* theBoard, Player* thePlayer, Die d1, Die d2, int turn){
 			if(yesOrNo()){
 				PropertyAction sellBankProperty(thePlayer, NULL, currentSpace, &theBank, false, true, false);
 				sellBankProperty.executeAction();
-				std::cout << players[turn].getPiece() << " now has $" << players[turn].getMoney() << std::endl;
+				std::cout << players[theTurn].getPiece() << " now has $" << players[theTurn].getMoney() << std::endl;
 			}
 			choice++;
 		}else if(!currentSpace->isOwned()){
@@ -131,7 +137,7 @@ int playTurn(Game_Board* theBoard, Player* thePlayer, Die d1, Die d2, int turn){
 			if(yesOrNo()){
 				PropertyAction buyProperty(thePlayer, NULL, currentSpace, &theBank, true, true, false);
 				buyProperty.executeAction();
-				std::cout << players[turn].getPiece() << " now has $" << players[turn].getMoney() << std::endl;
+				std::cout << players[theTurn].getPiece() << " now has $" << players[theTurn].getMoney() << std::endl;
 			}
 			choice++;
 		}else{
@@ -144,7 +150,7 @@ int playTurn(Game_Board* theBoard, Player* thePlayer, Die d1, Die d2, int turn){
 			transaction.executeAction();
 			transaction.takeMoney(thePlayer, amount);
 			transaction.executeAction();
-			std::cout << players[turn].getPiece() << " now has $" << players[turn].getMoney() << std::endl;
+			std::cout << players[theTurn].getPiece() << " now has $" << players[theTurn].getMoney() << std::endl;
 			std::cout << theOwner << " now has $" << otherPlayer->getMoney() << std::endl;
 		}
 		theBoard->printBoard();
@@ -163,24 +169,18 @@ int playTurn(Game_Board* theBoard, Player* thePlayer, Die d1, Die d2, int turn){
 			PropertyAction transferAllProperty(thePlayer, NULL, NULL, &theBank, false, true, true);
 			transferAllProperty.executeAction();
 		}
+
+		theTurn = -1;
+
 	}
 
-	//a test to see if players advance to go (0th index space) if landed on any right side space
-	// for(int i = 11; i < 20; i++){
-	// 	if(thePlayer->getCurrentSpace() == i){
-	// 		std::cout << "The " << thePlayer->getPiece() << " advanced to GO!" << std::endl;
-	// 		GoToAction goToGo(thePlayer, theBoard, theBoard->findSpaceByIndex(0));
-	// 		goToGo.executeAction();
-	// 	}
-	// }
-
-	return turn;
+	return theTurn;
 	
 }
 
 int gameOver(){
 	int over = 0;
-	if(turn == -1){
+	if(players.size() <= 1){
 		over = 1;
 	}
 
@@ -286,6 +286,8 @@ void getPlayerInfo(){
 		}
 
 		//a good piece is chosen
+		Player p;
+		players.push_back(p);
 		players[i].setPiece(pieces[x-1]);
 		std::cout << "\nExcellent Choice, Player " << i+1 << " is now the: " << players[i].getPiece() << std::endl << std::endl;
 		chosenPieces[x-1] = 0;

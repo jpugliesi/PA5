@@ -385,3 +385,7 @@
 	Bank* Game_Board::getBank(){
 		return theBank;
 	}
+
+	void Game_Board::updateNumPlayers(int n){
+		num_players = n;
+	}

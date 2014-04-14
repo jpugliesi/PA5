@@ -39,6 +39,12 @@
 		return currentPosition;
 	}
 
+	//similar to setPosition, except only done on game start to prevent passed Go bug
+	int Player::setInitialPosition(){
+		currentPosition = 0;
+		return currentPosition;
+	}
+
 	//gets currentPosition index
 	int Player::getCurrentSpace(){
 		return currentPosition;

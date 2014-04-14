@@ -20,6 +20,7 @@ class Game_Board{
 		void printBoard();
 		Space* findSpaceByIndex(int index);
 		Bank* getBank(); //returns a pointer to the Bank
+		void updateNumPlayers(int);
 
 	private:
 		//variables
