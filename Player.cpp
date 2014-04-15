@@ -113,7 +113,7 @@
 	bool Player::ownsSpace(Space* theSpace){
 
 		for(int i = 0; i < ownedSpaces.size(); i++){
-			if(ownedSpaces[i] == theSpace){
+			if(ownedSpaces[i]->getName() == theSpace->getName()){
 				return true;
 			}
 		}

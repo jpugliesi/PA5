@@ -80,6 +80,8 @@
 					spaces[i].setAction(new MoneyAction(NULL, 100, false, "Woops! Pay tax of $100."));
 				}else if(spaces[i].getName() == "*Chest*"){
 					spaces[i].setAction(new CardAction(theChestDeck));
+				}else if(spaces[i].getName() == "Go"){
+					spaces[i].setAction(NULL);
 				}
 			}
 			

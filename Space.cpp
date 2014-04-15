@@ -21,7 +21,7 @@
 		nextSpace = newNextSpace;
 		index = nextSpace-1;
 		value = newValue;
-		rent = value/10;
+		rent = value/3; //5 is arbitrary, make smaller # for a tougher and shorter game!
 	}
 	Space::~Space(){
 	}

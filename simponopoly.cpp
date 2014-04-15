@@ -16,6 +16,7 @@ void occupyPieces();
 int welcome();
 int getOption();
 int getTurnOption();
+int getNumOptions(int s, int e);
 int getNumPlayers();
 void populateDecks(Game_Board*);
 
@@ -65,20 +66,35 @@ int main(){
 		Die die1;
 		Die die2;
 		while(!gameOver()){
-
+			bool hasLost = false;
+			int lostTurn;
 			Player* playerWithTurn = &(players[turn]);
 			int result = playTurn(&theBoard, playerWithTurn, die1, die2, turn);
 
+			//If a player has lost, remove them from the space and update numPlayers
 			if(result == -1){
+				lostTurn = turn;
+				Space* currentSpace = theBoard.findSpaceByIndex(playerWithTurn->getCurrentSpace());
+				currentSpace->removePlayerFromSpace(*playerWithTurn);
 				std::cout << players[turn].getPiece() << " has lost." << std::endl;
 				players.erase(players.begin() + turn);
 				numPlayers = players.size();
 				theBoard.updateNumPlayers(numPlayers);
+				hasLost = true;
 			}
-			if(turn == numPlayers-1){
-				turn = 0;
+
+			if(!hasLost){
+				if(turn == numPlayers-1){
+					turn = 0;
+				}else{
+					turn++;
+				}
 			}else{
-				turn++;
+				if(lostTurn == numPlayers-1){
+					turn = 0;
+				}
+				turn = lostTurn; //could be repetitive...
+				hasLost = false;
 			}
 			
 			if(!gameOver()){
@@ -88,8 +104,9 @@ int main(){
 				}
 			}
 		}
-		std::cout << players[0].getPiece() << " is the Winner!" << std::endl;
-		std::cout << "Thanks for Playing" << std::endl;
+		std::cout << players[0].getPiece() << " is the Winner!" << std::endl << std::endl;
+		std::cout << "\t__________________" << std::endl;
+		std::cout << "\tThanks for Playing" << std::endl;
 
 	}
 	return 1;
@@ -97,6 +114,7 @@ int main(){
 
 int playTurn(Game_Board* theBoard, Player* thePlayer, Die d1, Die d2, int theTurn){
 
+	//roll the die
 	int v1 = d1.rollDie();
 	int v2 = d2.rollDie();
 	int moveValue = v1 + v2;
@@ -105,6 +123,7 @@ int playTurn(Game_Board* theBoard, Player* thePlayer, Die d1, Die d2, int theTur
 	std::cout << "Die rolled: " << v1 << " and " << v2 << "." << std::endl;
 	std::cout << "The " << thePlayer->getPiece() << " advances " << moveValue << " spaces!" << std::endl;
 
+	//move the player
 	MoveAction move(thePlayer, theBoard, moveValue);
 	move.executeAction();
 
@@ -114,6 +133,7 @@ int playTurn(Game_Board* theBoard, Player* thePlayer, Die d1, Die d2, int theTur
 
 	Space* currentSpace = theBoard->findSpaceByIndex(thePlayer->getCurrentSpace());
 
+	//if current space has an action, execute it
 	if(currentSpace->hasAction()){
 		Action* theAction = currentSpace->getAction();
 
@@ -123,16 +143,78 @@ int playTurn(Game_Board* theBoard, Player* thePlayer, Die d1, Die d2, int theTur
 	theBoard->printBoard();
 
 	currentSpace = theBoard->findSpaceByIndex(thePlayer->getCurrentSpace());
+	//if current space is ownable
 	if(currentSpace->isOwnable()){
+		//if the player owns that space, offer chance to:
+		// * sell it to the bank
+		// * sell it to another player
+		// * do neither and continue
 		if(thePlayer->ownsSpace(currentSpace)){
-			std::cout << "\t (" << choice << ") Sell " << currentSpace->getName() << " to Bank for $" << (int)(currentSpace->getValue())*(3./4) << "? (y/n)" << std::endl;
-			if(yesOrNo()){
+			std::cout << "\t (" << choice++ << ") Sell " << currentSpace->getName() << " to Bank for $" << (int)(currentSpace->getValue())*(3./4) << "?" << std::endl;
+			std::cout << "\t (" << choice++ << ") Sell " << currentSpace->getName() << " to Another Player for $" << currentSpace->getValue() << "?" << std::endl;
+			std::cout << "\t (" << choice++ << ") Neither. Continue." << std::endl;
+
+			int result = getNumOptions(1, choice-1); //get choice 1-3 corresponding to above options
+			//if player chooses to sell, sell it to the bank
+			if(result == 1){
 				PropertyAction sellBankProperty(thePlayer, NULL, currentSpace, &theBank, false, true, false);
 				sellBankProperty.executeAction();
 				std::cout << players[theTurn].getPiece() << " now has $" << players[theTurn].getMoney() << std::endl;
 			}
+			//else if selling to someone else, start process for selling to another player
+			else if(result == 2){
+				int c = 1;
+				bool cancel = false;
+				int playersArray[players.size()];
+				Player* chosenPlayer = NULL;
+				std::cout << "Which player?" << std::endl;
+				//print players to choose from
+				for(int i = 0; i < numPlayers; i++){
+					if(players[i].getPiece() != thePlayer->getPiece()){
+						std::cout << "\t(" << c << ") " << players[i].getPiece() << std::endl;
+						playersArray[i] = c++;
+					}else{
+						playersArray[i] = 0;
+					}
+					
+				}
+				//choose which player to sell to
+				std::cout << "\t(" << c << ") Cancel" << std::endl; //present a cancel option
+				int result2 = getNumOptions(1, players.size()); //players.size() because we have extra cancel option
+				for(int i = 0; i < players.size(); i++){
+					if(playersArray[i] == result2){
+						chosenPlayer = &players[i];
+						break;
+					}else if(result2 == c){ //user chose to cancel the transaction
+						cancel = true;
+						break;
+					}
+				}
+				//if user didn't cancel, ask other player if they're willing to buy
+				if(!cancel){
+					std::cout << chosenPlayer->getPiece() << ", do you agree to buy " << currentSpace->getName() << " for " << currentSpace->getValue() << "?" << std::endl;
+					//if they are, complete the sale
+					if(yesOrNo()){
+						//but only do it if player can actually afford it
+						if(chosenPlayer->getMoney() > currentSpace->getValue()){
+							PropertyAction sellPropertyToPlayer(thePlayer, chosenPlayer, currentSpace, &theBank, false, false, false);
+							sellPropertyToPlayer.executeAction();
+							std::cout << thePlayer->getPiece() << " sold " << currentSpace->getName() << " to " << chosenPlayer->getPiece() << " for $" << currentSpace->getValue() << std::endl;
+						}else{
+							std::cout << "Sorry, " << chosenPlayer->getPiece() << " doesn't have enough money for this transaction." << std::endl;
+						}
+					}else{
+						std::cout << "Sorry " << thePlayer->getPiece() << ", " << chosenPlayer->getPiece() << " declined your offer." << std::endl;
+					}
+				}		
+			}
+			else{
+
+			}
 			choice++;
-		}else if(!currentSpace->isOwned()){
+		}
+		//if the space is unowned, present player with chance to buy it
+		else if(!currentSpace->isOwned()){
 			std::cout << "\t(" << choice << ") Buy " << currentSpace->getName() << " for $" << currentSpace->getValue() << "? (y/n)" << std::endl;
 			if(yesOrNo()){
 				PropertyAction buyProperty(thePlayer, NULL, currentSpace, &theBank, true, true, false);
@@ -140,11 +222,13 @@ int playTurn(Game_Board* theBoard, Player* thePlayer, Die d1, Die d2, int theTur
 				std::cout << players[theTurn].getPiece() << " now has $" << players[theTurn].getMoney() << std::endl;
 			}
 			choice++;
-		}else{
+		}
+		//else, someone else owns the space, so player has to pay rent
+		else{
 			owesOtherPlayer = true;
 			otherPlayer = currentSpace->getOwnerReference();
 			std::string theOwner = currentSpace->getOwner();
-			std::cout << "Darn! You have to pay " << theOwner << " " << currentSpace->getRent() << "..." << std::endl;
+			std::cout << "Darn! You have to pay " << theOwner << " $" << currentSpace->getRent() << "..." << std::endl;
 			MoneyAction transaction(otherPlayer, currentSpace->getRent(), true);
 			int amount = transaction.getAmount();
 			transaction.executeAction();
@@ -156,12 +240,16 @@ int playTurn(Game_Board* theBoard, Player* thePlayer, Die d1, Die d2, int theTur
 		theBoard->printBoard();
 	}
 
+	//if the player has run out of money
 	if(!thePlayer->hasMoney()){
+		//if the player lost last of their money to another player...
 		if(owesOtherPlayer){
 			std::cout << thePlayer->getPiece() << " is out of money, and now owes " << otherPlayer->getPiece() << " all his property. Sorry!" << std::endl;
 			PropertyAction transferAllProperty(thePlayer, otherPlayer, NULL, &theBank, false, false, true);
 			transferAllProperty.executeAction();
-		}else{
+		}
+		//else if they lost their money to the bank/THE MAN/Chest
+		else{
 			std::cout << thePlayer->getPiece() << " is out of money, and now owes The Bank all his property. Sorry!" << std::endl;
 			std::cout << "Loosing:" << std::endl;
 			thePlayer->printOwnedSpaces();
@@ -178,6 +266,7 @@ int playTurn(Game_Board* theBoard, Player* thePlayer, Die d1, Die d2, int theTur
 	
 }
 
+//if there is only one player left, game is over
 int gameOver(){
 	int over = 0;
 	if(players.size() <= 1){
@@ -189,6 +278,7 @@ int gameOver(){
 
 // add cards to THE MAN deck and Chest Deck
 void populateDecks(Game_Board* theBoard){
+	//cards for THE MAN deck
 	std::string description = "You didn't file your damn taxes. Pay THE MAN a fine of $100";
 	theMan.addCard(new MoneyAction(NULL, 100, false, description));
 	description = "You were caught J-walking. Pay ticket of $200.";
@@ -197,32 +287,32 @@ void populateDecks(Game_Board* theBoard){
 	theMan.addCard(new MoneyAction(NULL, 200, true, description));
 	description = "You became a high ranking government official. Collect salary of $150.";
 	theMan.addCard(new MoneyAction(NULL, 150, true, description));
-	description = "You jeopordized a top-secret mission. Pay fine of $300";
-	theMan.addCard(new MoneyAction(NULL, 300, false, description));
-	description = "THE MAN is watching you. Pay $100 for tin-foil hat.";
-	theMan.addCard(new MoneyAction(NULL, 100, false, description));
+	description = "You jeopordized a top-secret mission. Pay fine of $500";
+	theMan.addCard(new MoneyAction(NULL, 500, false, description));
+	description = "THE MAN is watching you. Pay $150 for tin-foil hat.";
+	theMan.addCard(new MoneyAction(NULL, 150, false, description));
 	description = "You get a tax write-off. Collect $50.";
 	theMan.addCard(new MoneyAction(NULL, 50, true, description));
-	description = "You were caught speeding. Pay ticket of $250.";
-	theMan.addCard(new MoneyAction(NULL, 250, false, description));
-	description = "You littered! How dare you!. Pay find of $200.";
-	theMan.addCard(new MoneyAction(NULL, 200, false, description));
+	description = "You were caught speeding. Pay ticket of $350.";
+	theMan.addCard(new MoneyAction(NULL, 350, false, description));
+	description = "You littered! How dare you!. Pay fine of $500.";
+	theMan.addCard(new MoneyAction(NULL, 500, false, description));
 	description = "You won Ms. America! Collect $400.";
 	theMan.addCard(new MoneyAction(NULL, 400, true, description));
 	description = "You got a fat research stipend! Collect $300.";
 	theMan.addCard(new MoneyAction(NULL, 300, true, description));
 	description = "You are disliked. Pay $50.";
 	theMan.addCard(new MoneyAction(NULL, 50, false, description));
-	description = "You skipped jury duty. Pay fine of $100.";
-	theMan.addCard(new MoneyAction(NULL, 100, false, description));
+	description = "You skipped jury duty. Pay fine of $450.";
+	theMan.addCard(new MoneyAction(NULL, 450, false, description));
 	description = "You attended jury duty. Collect compensation of $100.";
 	theMan.addCard(new MoneyAction(NULL, 100, true, description));
 	description = "THE MAN is poor. Give him $150.";
 	theMan.addCard(new MoneyAction(NULL, 150, false, description));
 	description = "You are poor. Collect handout of $100.";
 	theMan.addCard(new MoneyAction(NULL, 100, true, description));
-	description = "You are a menace to society. Pay $150 and repent!";
-	theMan.addCard(new MoneyAction(NULL, 150, false, description));
+	description = "You are a menace to society. Pay $250!";
+	theMan.addCard(new MoneyAction(NULL, 250, false, description));
 	description = "You know too much. Here. Take this and shut up.";
 	theMan.addCard(new MoneyAction(NULL, 200, true, description));
 	description = "You are an oil mongol. Respect us! Here's $200";
@@ -233,6 +323,7 @@ void populateDecks(Game_Board* theBoard){
 	//14 is siberia's index in the gameboard spaces array
 	theMan.addCard(new GoToAction(NULL, theBoard, theBoard->findSpaceByIndex(14), description));
 
+	//cards for chest deck
 	description = "Advance 3 spaces.";
 	chest.addCard(new MoveAction(NULL, theBoard, 3, description));
 	description = "Advance 20 spaces.";
@@ -250,7 +341,7 @@ void populateDecks(Game_Board* theBoard){
 	description = "They call it Debt Row...";
 	chest.addCard(new GoToAction(NULL, theBoard, theBoard->findSpaceByIndex(31), description));
 	description = "Pack up and move to Brooklyn.";
-	chest.addCard(new GoToAction(NULL, theBoard, theBoard->findSpaceByIndex(5), description));
+	chest.addCard(new GoToAction(NULL, theBoard, theBoard->findSpaceByIndex(12), description));
 
 	//shuffle dem decks
 	theMan.shuffle();
@@ -260,6 +351,7 @@ void populateDecks(Game_Board* theBoard){
 
 }
 
+//gets players pieces
 void getPlayerInfo(){
 	int chosenPieces[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 	for(int i = 0; i < numPlayers; i++){
@@ -308,6 +400,7 @@ bool pieceIsTaken(int *chosenPieces, int choice){
 	return true;
 }
 
+//prints available pieces
 void printAvailablePieces(int *availablePieces){
 
 	for(int i = 0; i < NUM_PIECES; i++){
@@ -321,6 +414,7 @@ void printAvailablePieces(int *availablePieces){
 
 }
 
+//occupies pieces array
 void occupyPieces(){
 	pieces[0] = "!";
 	pieces[1] = "@";
@@ -334,6 +428,7 @@ void occupyPieces(){
 	pieces[9] = "?";
 }
 
+//welcome and launch method
 int welcome(){
 	std::cout << "***** Welcome to Simponopoly! *****" << std::endl;
 	std::cout << "___________________________________" << std::endl;
@@ -366,6 +461,34 @@ int getTurnOption(){
 
 	std::cout << "Continue playing? ";
 	return yesOrNo();
+
+}
+
+int getNumOptions(int start, int end){
+
+	int x;
+
+	do{
+
+	std::cin >> x;
+
+	if (std::cin.fail() || (x < start || x > end)){
+
+		std::cin.clear();
+		std::cin.ignore(10000, '\n'); //clear inputs up to 10,000 characters, or first newline
+		std::cout << "Please Enter a Valid Option: ";
+		continue; //jump to while statement
+
+	}
+
+	//a good integer entered
+
+	std::cin.ignore(100000, '\n'); //clear the stream
+	break; //exit the loop
+
+	} while(true);
+
+	return x;
 
 }
 
