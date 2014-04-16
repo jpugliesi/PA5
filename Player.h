@@ -15,6 +15,7 @@ class Player{
 		int currentPosition; //index position of player on the board
 		std::vector<Space*> ownedSpaces;
 		bool passedGo;
+		bool inGame;
 	public:
 
 		//constructors
@@ -27,6 +28,9 @@ class Player{
 		int setPosition(int position); //sets the player's space index to position
 		int setInitialPosition(); //sets the player's space index to 0 (only for game setup)
 		bool didPassGo(); //returns true if player's index has just exceeded 39, then sets passedGo to false
+
+		bool getInGame();
+		void toggleInGame();
 
 		void setPiece(std::string newPiece); //sets player's piece to newPiece
 		std::string getPiece(); //returns player's piece

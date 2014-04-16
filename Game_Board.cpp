@@ -20,6 +20,7 @@
 	}
 
 	Game_Board::~Game_Board(){
+		
 	}
 
 	//occupies the spaces array with predefined spaces, as follows:
@@ -111,7 +112,7 @@
 	//prints in reverse order if isReverse is true
 	void Game_Board::printBoardRowReverse(int firstSpace, int lastSpace, bool isReverse){
 
-		int spacesToPrint = abs(lastSpace - firstSpace) + 1;
+		int spacesToPrint = std::abs(lastSpace - firstSpace) + 1;
 
 		if(!isReverse){
 			printTopLine(spacesToPrint);

@@ -12,6 +12,7 @@
 		piece = "";
 		money = 1000;
 		passedGo = false;
+		inGame = true;
 
 	}
 	Player::~Player(){
@@ -71,6 +72,7 @@
 
 	//gets amount of money player has as an int value
 	int Player::getMoney(){
+		if(money < 0) return 0;
 		return money;
 	}
 
@@ -128,6 +130,14 @@
 		for(int i = 0; i < ownedSpaces.size(); i++){
 			std::cout << "\t" << ownedSpaces[i]->getName() << std::endl;
 		}
+	}
+
+	bool Player::getInGame(){
+		return inGame;
+	}
+
+	void Player::toggleInGame(){
+		inGame = false;
 	}
 
 

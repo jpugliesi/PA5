@@ -66,45 +66,76 @@ int main(){
 		Die die1;
 		Die die2;
 		while(!gameOver()){
-			bool hasLost = false;
-			int lostTurn;
 			Player* playerWithTurn = &(players[turn]);
-			int result = playTurn(&theBoard, playerWithTurn, die1, die2, turn);
+			if(playerWithTurn->getInGame()){
+				int result = playTurn(&theBoard, playerWithTurn, die1, die2, turn);
 
-			//If a player has lost, remove them from the space and update numPlayers
-			if(result == -1){
-				lostTurn = turn;
-				Space* currentSpace = theBoard.findSpaceByIndex(playerWithTurn->getCurrentSpace());
-				currentSpace->removePlayerFromSpace(*playerWithTurn);
-				std::cout << players[turn].getPiece() << " has lost." << std::endl;
-				players.erase(players.begin() + turn);
-				numPlayers = players.size();
-				theBoard.updateNumPlayers(numPlayers);
-				hasLost = true;
-			}
+				//If a player has lost, remove them from the space and update numPlayers
+				if(result == -1){
+					playerWithTurn->toggleInGame();
+					// std::cout << "Turn: " << turn << std::endl;
+					Space* currentSpace = theBoard.findSpaceByIndex(playerWithTurn->getCurrentSpace());
+					currentSpace->removePlayerFromSpace(*playerWithTurn);
+					std::cout << players[turn].getPiece() << " has lost." << std::endl;
+					theBoard.updateNumPlayers(numPlayers);
+				}
 
-			if(!hasLost){
 				if(turn == numPlayers-1){
 					turn = 0;
 				}else{
 					turn++;
 				}
-			}else{
-				if(lostTurn == numPlayers-1){
-					turn = 0;
+				
+				//if the game is not over
+				if(!gameOver()){
+					playerWithTurn = &(players[turn]);
+					while(!playerWithTurn->getInGame()){
+						if(turn == numPlayers-1){
+							turn = 0;
+						}else{
+							turn++;
+						}
+						playerWithTurn = &(players[turn]);
+					}
+					if(playerWithTurn->getInGame()){
+						while(!getTurnOption()){
+							//if the next player chooses to quit the game
+
+							playerWithTurn->toggleInGame();
+							PropertyAction transferAllProperty(playerWithTurn, NULL, NULL, &theBank, false, true, true);
+							transferAllProperty.executeAction();
+							Space* currentSpace = theBoard.findSpaceByIndex(playerWithTurn->getCurrentSpace());
+							currentSpace->removePlayerFromSpace(*playerWithTurn);									//remove the player from the space
+							std::cout << players[turn].getPiece() << " has quit the game!" << std::endl<<std::endl;
+							std::cout << "Bank takes ownership of:" << std::endl;
+							playerWithTurn->printOwnedSpaces();
+							if(turn == numPlayers-1){																	//if turn == numPlayers, it will be out of bounds, so
+								turn = 0;																			//set turn = 0
+							}else{
+								turn++;
+							}
+							playerWithTurn = &(players[turn]);
+							if(gameOver()) break;
+						}
+					}
 				}
-				turn = lostTurn; //could be repetitive...
-				hasLost = false;
-			}
-			
-			if(!gameOver()){
-				if(!getTurnOption()){
-					std::cout << "Thanks for Playing" << std::endl;
-					return -1;
+			}else{
+				if(turn == numPlayers-1){
+					turn = 0;
+				}else{
+					turn++;
 				}
 			}
 		}
-		std::cout << players[0].getPiece() << " is the Winner!" << std::endl << std::endl;
+		int i;
+		for(i = 0; i < players.size(); i++){
+			if(players[i].getInGame()){
+				break;
+			}
+		}
+		std::cout << std::endl << std::endl;
+		std::cout << "\t__________________" << std::endl << std::endl <<std::endl;
+		std::cout << "\t" << players[i].getPiece() << " is the Winner!" << std::endl << std::endl;
 		std::cout << "\t__________________" << std::endl;
 		std::cout << "\tThanks for Playing" << std::endl;
 
@@ -170,7 +201,7 @@ int playTurn(Game_Board* theBoard, Player* thePlayer, Die d1, Die d2, int theTur
 				std::cout << "Which player?" << std::endl;
 				//print players to choose from
 				for(int i = 0; i < numPlayers; i++){
-					if(players[i].getPiece() != thePlayer->getPiece()){
+					if(players[i].getPiece() != thePlayer->getPiece() && players[i].getInGame()){
 						std::cout << "\t(" << c << ") " << players[i].getPiece() << std::endl;
 						playersArray[i] = c++;
 					}else{
@@ -269,9 +300,13 @@ int playTurn(Game_Board* theBoard, Player* thePlayer, Die d1, Die d2, int theTur
 //if there is only one player left, game is over
 int gameOver(){
 	int over = 0;
-	if(players.size() <= 1){
-		over = 1;
+	int count = 0;
+	for(int i = 0; i < players.size(); i++){
+		if(players[i].getInGame()){
+			count++;
+		}
 	}
+	if(count == 1) over = 1;
 
 	return over; //temporary
 }

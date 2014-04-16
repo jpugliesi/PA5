@@ -123,9 +123,8 @@
 		Player* player1 = getActingPlayer();
 
 		for(int i = 0; i < player1->getNumOwnedSpaces(); i++){
-			Space* theSpace = player1->getOwnedSpace(i);
-			player1->looseSpace(theSpace->getSpaceIndex());
-			theSpace->setOwner(NULL);
+			player1->getOwnedSpace(i)->setOwner(NULL);
+			player1->looseSpace(i);
 		}
 
 	}
